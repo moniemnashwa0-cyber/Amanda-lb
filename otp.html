@@ -185,7 +185,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
     </div>
     <p>تم تسجيل الدخول بنجاح</p>
-    <button type="button" onclick="window.location.href='bank-app.html'">الذهاب للحساب</button>
+    <button type="button" onclick="window.location.href='index.html'">الذهاب للحساب</button>
   </div>
 
   <div class="overlay" id="rejectOverlay">
@@ -200,7 +200,7 @@
     var requestId = sessionStorage.getItem('aman_bank_request_id');
     if (!requestId) {
       // مفيش طلب معلّق، رجّعه لصفحة الدخول
-      window.location.href = 'bank-app.html';
+      window.location.href = 'index.html';
     }
 
     var otpForm = document.getElementById('otpForm');
