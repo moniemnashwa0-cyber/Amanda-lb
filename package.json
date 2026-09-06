@@ -1,12 +1,13 @@
 {
-  "name": "amanda-app",
+  "name": "aman-bank-app",
   "version": "1.0.0",
-  "description": "App server",
+  "private": true,
+  "description": "Aman Bank demo app + backend (no database, in-memory storage)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
-  "dependencies": {
-    "express": "^4.18.2"
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
